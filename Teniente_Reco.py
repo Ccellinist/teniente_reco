@@ -22,8 +22,8 @@ async def main():
     scheduler.add_job(
         Teniente.nuevo_dia,
         trigger='cron',
-        hour=15,
-        minute=57,
+        hour=7,
+        minute=0,
         second=0,
         args=[app.bot]
     )
