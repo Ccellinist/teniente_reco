@@ -21,11 +21,11 @@ async def recordar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         segundos = int(context.args[0])
         mensaje = " ".join(context.args[1:])
-        await update.message.reply_text(f"⏳ Te recordaré esto en {segundos} segundos: {mensaje}")
+        await update.message.reply_text(f"⏳")
         await asyncio.sleep(segundos)
         await update.message.reply_text(f"🔔 Recordatorio: {mensaje}")
     except:
-        await update.message.reply_text("Hasta para crear un recordatorio vales verga\nEs así:\n/recordar [segundos] [mensaje]")
+        await update.message.reply_text("No sabes ni crear un recordatorio?\nEs así!:\n/recordar [segundos] [mensaje]")
 
 
 async def frase(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -46,6 +46,8 @@ async def nuevo_dia(context: ContextTypes.DEFAULT_TYPE = None):
     await telegram_bot.mensaje(cita.obtener_frase())
 
 
-async def enviar_nuevas_noticias():
-    for noticia in noticias.obtener_nuevas_noticias():
+async def enviar_nuevas_noticias(context: ContextTypes.DEFAULT_TYPE = None):
+    nuevas = noticias.obtener_nuevas_noticias()
+
+    for noticia in nuevas:
         await telegram_bot.mensaje(noticia)

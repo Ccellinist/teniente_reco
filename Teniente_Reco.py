@@ -10,6 +10,7 @@ BOT_TOKEN = Teniente.BOT_TOKEN
 
 
 async def main():
+    os.system("cls")
     global app
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
@@ -28,17 +29,16 @@ async def main():
         args=[app.bot]
     )
 
-    # 🔁 Revisión de noticias cada 10 minutos
+    # Revisión de noticias cada 10 minutos
     scheduler.add_job(
         Teniente.enviar_nuevas_noticias,
         trigger='interval',
-        minutes=10,
+        minutes=5,
         args=[app.bot]
     )
 
     scheduler.start()
 
-    os.system("cls")
     print("🤖 Bot en marcha...")
     # await app.initialize()
     # await app.start()
