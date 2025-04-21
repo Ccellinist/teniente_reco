@@ -11,20 +11,17 @@ BOT_USERNAME = os.getenv("BOT_USERNAME")
 WEBHOOK_URL = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{BOT_USERNAME}"
 
 flask_app = Flask(__name__)
+app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+# ⚠️ Esta función NO debe ser async
 
 
 @flask_app.route(f"/{BOT_USERNAME}", methods=["POST"])
-async def webhook():
-    print("✅ Webhook recibido", flush=True)
-    try:
-        json_data = request.get_json(force=True)
-        print("📦 Datos recibidos:", json_data, flush=True)
-        update = Update.de_json(json_data, app.bot)
-        await app.process_update(update)
-        return "OK", 200
-    except Exception as e:
-        print("❌ Error en el webhook:", e, flush=True)
-        return "ERROR", 500
+def webhook():
+    update = Update.de_json(request.get_json(force=True), app.bot)
+    # 👈 Ejecutamos el update de forma asíncrona
+    asyncio.create_task(app.process_update(update))
+    return "OK", 200
 
 
 app = None  # App de Telegram, se inicializa en setup()
@@ -32,7 +29,6 @@ app = None  # App de Telegram, se inicializa en setup()
 
 async def setup():
     global app
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     # Handlers
     app.add_handler(CommandHandler("start", Teniente.start))
@@ -64,8 +60,8 @@ async def setup():
     )
 
     scheduler.start()
-    print("📅 Tareas programadas:")
-    scheduler.print_jobs()
+    # print("📅 Tareas programadas:")
+    # scheduler.print_jobs()
 
     # Inicialización y webhook
     await app.initialize()
