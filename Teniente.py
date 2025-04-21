@@ -76,4 +76,4 @@ async def enviar_nuevas_noticias(context: ContextTypes.DEFAULT_TYPE = None):
 
 
 async def test_tarea(bot):
-    await el_clima()
+    await telegram_bot.mensaje(clima.obtener_clima())
