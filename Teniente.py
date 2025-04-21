@@ -53,7 +53,7 @@ async def el_clima(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def nuevo_dia(context: ContextTypes.DEFAULT_TYPE = None):
-    await telegram_bot.mensaje("🌞 ¡Buenos días!")
+    print("¡Buenos días!")
 
     # for noticia in noticias.obtener_noticias():
     #     await telegram_bot.mensaje(noticia)
@@ -63,6 +63,7 @@ async def nuevo_dia(context: ContextTypes.DEFAULT_TYPE = None):
 
 
 async def enviar_nuevas_noticias(context: ContextTypes.DEFAULT_TYPE = None):
+    print("Revisión de noticias iniciada...")
     nuevas = noticias.obtener_nuevas_noticias()
     if nuevas:
         for noticia in nuevas:
