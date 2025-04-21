@@ -34,6 +34,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def recordar(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("Recordatorio Creado")
     try:
         segundos = int(context.args[0])
         mensaje = " ".join(context.args[1:])
@@ -45,15 +46,17 @@ async def recordar(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def frase(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("Frase")
     await telegram_bot.mensaje(cita.obtener_frase())
 
 
 async def el_clima(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("Clima")
     await telegram_bot.mensaje(clima.obtener_clima())
 
 
 async def nuevo_dia(context: ContextTypes.DEFAULT_TYPE = None):
-    print("¡Buenos días!")
+    print("Nuevo Dia")
 
     # for noticia in noticias.obtener_noticias():
     #     await telegram_bot.mensaje(noticia)
@@ -70,3 +73,8 @@ async def enviar_nuevas_noticias(context: ContextTypes.DEFAULT_TYPE = None):
             await telegram_bot.mensaje(noticia)
     else:
         await telegram_bot.mensaje("Sin nuevas noticias")
+
+
+async def test_tarea(bot):
+    print("🚀 Tarea de prueba ejecutada")
+    await bot.send_message(chat_id=os.getenv("TELEGRAM_CHAT_ID"), text="✅ Tarea de prueba funcionando")

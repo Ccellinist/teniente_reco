@@ -50,7 +50,16 @@ async def setup():
         minutes=5,
         args=[app.bot]
     )
+    scheduler.add_job(
+        Teniente.test_tarea,
+        trigger='interval',
+        seconds=30,
+        args=[app.bot]
+    )
+
     scheduler.start()
+    print("📅 Tareas programadas:")
+    scheduler.print_jobs()
 
     # Inicialización y webhook
     await app.initialize()
