@@ -68,7 +68,15 @@ async def setup():
 
 
 if __name__ == "__main__":
+    import threading
     import nest_asyncio
     nest_asyncio.apply()
+
+    def run_flask():
+        flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+
+    # Inicia Flask en un hilo separado
+    threading.Thread(target=run_flask).start()
+
+    # Ejecuta el bot y las tareas programadas
     asyncio.run(setup())
-    flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
