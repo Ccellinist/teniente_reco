@@ -11,6 +11,16 @@ BOT_USERNAME = os.getenv("BOT_USERNAME")
 WEBHOOK_URL = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{BOT_USERNAME}"
 
 flask_app = Flask(__name__)
+
+
+@flask_app.route(f"/{BOT_USERNAME}", methods=["POST"])
+def webhook():
+    if app:
+        update = Update.de_json(request.get_json(force=True), app.bot)
+        asyncio.run(app.process_update(update))
+    return "OK", 200
+
+
 app = None  # App de Telegram, se inicializa en setup()
 
 
@@ -46,14 +56,6 @@ async def setup():
     await app.initialize()
     await app.start()
     await app.bot.set_webhook(f"{WEBHOOK_URL}")
-
-
-@flask_app.route(f"/{BOT_USERNAME}", methods=["POST"])
-async def webhook():
-    if app:
-        update = Update.de_json(request.get_json(force=True), app.bot)
-        await app.process_update(update)
-    return "OK", 200
 
 
 if __name__ == "__main__":
