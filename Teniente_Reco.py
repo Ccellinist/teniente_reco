@@ -1,33 +1,30 @@
-from telegram.ext import ApplicationBuilder, CommandHandler, Application
-import asyncio
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import Teniente
-import os
+from telegram.ext import ApplicationBuilder, CommandHandler
+from telegram import Update
 from flask import Flask, request
-
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import asyncio
+import os
+import Teniente
 
 BOT_TOKEN = Teniente.BOT_TOKEN
-# tu usuario de bot sin @, ej: TenienteRecoBot
 BOT_USERNAME = os.getenv("BOT_USERNAME")
 WEBHOOK_URL = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{BOT_USERNAME}"
 
+flask_app = Flask(__name__)
+app = None  # App de Telegram, se inicializa en setup()
+
 
 async def setup():
-    os.system("cls")
-
     global app
-    app = Application.builder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", Teniente.start))
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    # Establecer webhook
-    await app.bot.set_webhook(WEBHOOK_URL)
-    await app.start()
-
+    # Handlers
     app.add_handler(CommandHandler("start", Teniente.start))
     app.add_handler(CommandHandler("recordar", Teniente.recordar))
     app.add_handler(CommandHandler("clima", Teniente.el_clima))
     app.add_handler(CommandHandler("frase", Teniente.frase))
 
+    # Tareas programadas
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         Teniente.nuevo_dia,
@@ -37,25 +34,30 @@ async def setup():
         second=0,
         args=[app.bot]
     )
-
-    # Revisión de noticias cada 10 minutos
     scheduler.add_job(
         Teniente.enviar_nuevas_noticias,
         trigger='interval',
         minutes=5,
         args=[app.bot]
     )
-
     scheduler.start()
 
-    print("🤖 Bot en marcha...")
-    # await app.initialize()
-    # await app.start()
-    await app.run_polling()
+    # Inicialización y webhook
+    await app.initialize()
+    await app.start()
+    await app.bot.set_webhook(f"{WEBHOOK_URL}")
+
+
+@flask_app.route(f"/{BOT_USERNAME}", methods=["POST"])
+async def webhook():
+    if app:
+        update = Update.de_json(request.get_json(force=True), app.bot)
+        await app.process_update(update)
+    return "OK", 200
 
 
 if __name__ == "__main__":
-    import asyncio
+    import nest_asyncio
+    nest_asyncio.apply()
     asyncio.run(setup())
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
