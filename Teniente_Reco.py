@@ -14,11 +14,17 @@ flask_app = Flask(__name__)
 
 
 @flask_app.route(f"/{BOT_USERNAME}", methods=["POST"])
-def webhook():
-    if app:
-        update = Update.de_json(request.get_json(force=True), app.bot)
-        asyncio.run(app.process_update(update))
-    return "OK", 200
+async def webhook():
+    print("✅ Webhook recibido", flush=True)
+    try:
+        json_data = request.get_json(force=True)
+        print("📦 Datos recibidos:", json_data, flush=True)
+        update = Update.de_json(json_data, app.bot)
+        await app.process_update(update)
+        return "OK", 200
+    except Exception as e:
+        print("❌ Error en el webhook:", e, flush=True)
+        return "ERROR", 500
 
 
 app = None  # App de Telegram, se inicializa en setup()
