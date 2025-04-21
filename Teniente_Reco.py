@@ -1,88 +1,56 @@
-from telegram.ext import ApplicationBuilder, CommandHandler
-from telegram import Update
-from flask import Flask, request
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import asyncio
+# main.py
 import os
-import Teniente
+import asyncio
+from flask import Flask, request
+from telegram import Update
+from telegram.ext import (
+    ApplicationBuilder, CommandHandler, ContextTypes
+)
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import Teniente  # tu módulo
 
-BOT_TOKEN = Teniente.BOT_TOKEN
-BOT_USERNAME = os.getenv("BOT_USERNAME")
-WEBHOOK_URL = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{BOT_USERNAME}"
+BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
+BOT_USERNAME = os.getenv("BOT_USERNAME") or "TRTT_bot"
+WEBHOOK_PATH = f"/{BOT_USERNAME}"
+WEBHOOK_URL = f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}{WEBHOOK_PATH}"
 
-flask_app = Flask(__name__)
 app = ApplicationBuilder().token(BOT_TOKEN).build()
+flask_app = Flask(__name__)
+scheduler = AsyncIOScheduler()
 
-# ⚠️ Esta función NO debe ser async
+# ✅ Webhook: esta ruta será llamada por Telegram
 
 
-@flask_app.route(f"/{BOT_USERNAME}", methods=["POST"])
-def webhook():
+@flask_app.route(WEBHOOK_PATH, methods=["POST"])
+def receive_update():
     update = Update.de_json(request.get_json(force=True), app.bot)
-    # 👈 Ejecutamos el update de forma asíncrona
+    # 👈 ejecutamos en background
     asyncio.create_task(app.process_update(update))
-    return "OK", 200
-
-
-app = None  # App de Telegram, se inicializa en setup()
+    return "ok", 200
 
 
 async def setup():
-    global app
-
-    # Handlers
+    # 🔁 Comandos
     app.add_handler(CommandHandler("start", Teniente.start))
     app.add_handler(CommandHandler("recordar", Teniente.recordar))
     app.add_handler(CommandHandler("clima", Teniente.el_clima))
     app.add_handler(CommandHandler("frase", Teniente.frase))
 
-    # Tareas programadas
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(
-        Teniente.nuevo_dia,
-        trigger='cron',
-        hour=7,
-        minute=0,
-        second=0,
-        args=[app.bot]
-    )
-    scheduler.add_job(
-        Teniente.enviar_nuevas_noticias,
-        trigger='interval',
-        minutes=5,
-        args=[app.bot]
-    )
-    scheduler.add_job(
-        Teniente.test_tarea,
-        trigger='interval',
-        seconds=30,
-        args=[app.bot]
-    )
-
+    # 📅 Tareas
+    scheduler.add_job(Teniente.nuevo_dia, trigger='cron',
+                      hour=7, minute=0, args=[app.bot])
+    scheduler.add_job(Teniente.enviar_nuevas_noticias,
+                      trigger='interval', minutes=5, args=[app.bot])
+    scheduler.add_job(Teniente.test_tarea, trigger='interval',
+                      seconds=5, args=[app.bot])
     scheduler.start()
-    # print("📅 Tareas programadas:")
-    # scheduler.print_jobs()
 
-    # Inicialización y webhook
     await app.initialize()
     await app.start()
-    await app.bot.set_webhook(f"{WEBHOOK_URL}")
-
+    await app.bot.set_webhook(WEBHOOK_URL)
 
 if __name__ == "__main__":
-    import threading
     import nest_asyncio
-    import asyncio
-
     nest_asyncio.apply()
-
-    # Inicia Flask en un hilo
-    def run_flask():
-        flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
-
-    threading.Thread(target=run_flask).start()
-
-    # Corre setup en el event loop
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(setup())
-    loop.run_forever()
+    asyncio.run(setup())
+    flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
