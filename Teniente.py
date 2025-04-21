@@ -76,5 +76,4 @@ async def enviar_nuevas_noticias(context: ContextTypes.DEFAULT_TYPE = None):
 
 
 async def test_tarea(bot):
-    print("🚀 Tarea de prueba ejecutada", flush=True)
-    await bot.send_message(chat_id=os.getenv("TELEGRAM_CHAT_ID"), text="✅ Tarea de prueba funcionando")
+    await el_clima()
